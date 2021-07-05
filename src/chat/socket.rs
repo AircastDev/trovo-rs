@@ -27,8 +27,9 @@ pub struct ChatMessageStream {
 impl ChatMessageStream {
     /// Connect to trovo chat using the given chat token.
     ///
-    /// See [`Client::chat_messages_for_channel`] and [`Client::chat_messages_for_user`]
-    /// for fetching the token and connecting in one.
+    /// See [`Client::chat_messages_for_channel`](crate::Client::chat_messages_for_channel) and
+    /// [`Client::chat_messages_for_user`](crate::Client::chat_messages_for_user) for fetching
+    /// the token and connecting in one.
     pub async fn connect(chat_token: ChatToken) -> Result<ChatMessageStream, ChatConnectError> {
         let cancellation_token = CancellationToken::new();
         let (ws_stream, _) = connect_async("wss://open-chat.trovo.live/chat").await?;

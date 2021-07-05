@@ -2,6 +2,16 @@
 name = "trovo"
 version = "0.1.0"
 edition = "2018"
+description = "A trovo.live api & chat client written in and for rust"
+authors = ["James Birtles <jamesb@airca.st>"]
+license = "MIT OR Apache-2.0"
+readme = "README.md"
+keywords = ["trovo", "api", "chat"]
+categories = ["api-bindings", "asynchronous", "web-programming::websocket", "web-programming::http-client"]
+repository = "https://github.com/AircastDev/trovo-rs"
+
+[badges]
+github = { repository = "AircastDev/trovo-rs" }
 
 [features]
 default = ["chat"]

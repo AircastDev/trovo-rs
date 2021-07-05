@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.2.1 (2021-07-05)
+
+### Added
+
+-   Add `channel_by_id` function to client
+
+### Fixed
+
+-   Deserialising of `chats` when various fields were null
+
 ## v0.2.0 (2021-07-05)
 
 ### Added

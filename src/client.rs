@@ -1,5 +1,6 @@
 use crate::{
-    ApiError, ClientIdProvider, ErrorStatus, GetUsersPayload, GetUsersResponse, RequestError, User,
+    ApiError, ChannelInfo, ClientIdProvider, ErrorStatus, GetChannelByIdPayload, GetUsersPayload,
+    GetUsersResponse, RequestError, User,
 };
 use std::time::Duration;
 
@@ -83,5 +84,37 @@ where
         } else {
             Ok(None)
         }
+    }
+
+    /// Gets channel information for the given id
+    ///
+    /// Returns None if the channel was not found
+    pub async fn channel_by_id(
+        &self,
+        channel_id: impl Into<String>,
+    ) -> Result<Option<ChannelInfo>, RequestError> {
+        let res = self
+            .http
+            .post("https://open-api.trovo.live/openplatform/channels/id")
+            .header("Client-ID", self.auth_provider.client_id())
+            .json(&GetChannelByIdPayload {
+                channel_id: channel_id.into(),
+            })
+            .send()
+            .await?;
+
+        if ApiError::can_handle_code(res.status()) {
+            let err: ApiError = res.json().await.unwrap_or_default();
+            return Err(RequestError::ApiError(err));
+        }
+
+        let channel: ChannelInfo = res.error_for_status()?.json().await?;
+        Ok(if channel.username.is_empty() {
+            // Trovo api returns a nulled out channel if it can't be found, username is probably
+            // never legitimately blank
+            None
+        } else {
+            Some(channel)
+        })
     }
 }

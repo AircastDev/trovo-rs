@@ -157,6 +157,7 @@ pub struct ChatMessage {
     pub sub_lv: Option<String>,
 
     /// The list of badge names of the sender.
+    #[serde(default)]
     pub medals: Vec<String>,
 
     /// The list of decoration names of sender.
@@ -164,6 +165,7 @@ pub struct ChatMessage {
     pub decos: Vec<String>,
 
     /// The list of roles of the message sender. One user can have multiple roles, for example: “roles”:[“mod”, “follower”]
+    #[serde(default)]
     pub roles: Vec<String>,
 
     /// ID of the message.

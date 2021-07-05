@@ -1,0 +1,26 @@
+[package]
+name = "trovo"
+version = "0.1.0"
+edition = "2018"
+
+[features]
+default = ["chat"]
+chat = ["async-tungstenite", "tokio-util"]
+
+[dependencies]
+tokio = { version = "1", features = ["macros", "sync", "time"] }
+futures = "0.3"
+tracing = "0.1"
+reqwest = { version = "0.11", default-features = false, features = ["rustls-tls", "json"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+async-trait = "0.1"
+thiserror = "1.0"
+serde_repr = "0.1"
+
+# cfg(feature = "chat")
+async-tungstenite = { version = "0.13", optional = true, features = ["tokio-runtime", "tokio-rustls"] }
+tokio-util = { version = "0.6", optional = true }
+
+[dev-dependencies]
+tokio = { version = "1", features = ["rt-multi-thread"] }

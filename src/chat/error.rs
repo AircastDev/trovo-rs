@@ -7,9 +7,6 @@ pub enum ChatConnectError {
     /// Error connecting to socket
     WebSocket(tungstenite::Error),
 
-    /// Http error
-    Http(reqwest::Error),
-
     /// Error serialising or deserialising entities
     Serde(serde_json::Error),
 
@@ -29,18 +26,11 @@ impl From<serde_json::Error> for ChatConnectError {
     }
 }
 
-impl From<reqwest::Error> for ChatConnectError {
-    fn from(error: reqwest::Error) -> Self {
-        Self::Http(error)
-    }
-}
-
 impl Display for ChatConnectError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::WebSocket(e) => e.fmt(f),
             Self::Serde(e) => e.fmt(f),
-            Self::Http(e) => e.fmt(f),
             Self::SocketClosed => write!(f, "socket closed"),
         }
     }
@@ -51,7 +41,6 @@ impl Error for ChatConnectError {
         match self {
             Self::WebSocket(e) => Some(e),
             Self::Serde(e) => Some(e),
-            Self::Http(e) => Some(e),
             Self::SocketClosed => None,
         }
     }

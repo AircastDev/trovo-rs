@@ -1,6 +1,7 @@
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 use serde_repr::*;
+use std::fmt::{Debug, Display};
 use thiserror::Error;
 
 /// Error codes returned by the Trovo api
@@ -138,6 +139,26 @@ pub enum RequestError {
     Other(#[from] reqwest::Error),
 }
 
+/// Standard errors that can occur on most api calls
+#[derive(Debug, Error)]
+pub enum AuthenticatedRequestError<E>
+where
+    E: Display + Debug,
+{
+    /// Failed to refresh the access token
+    #[error("failed to refresh token: {0}")]
+    RefreshToken(E),
+
+    /// The api returned an error response. Can inspect the stats to found out what specifically
+    /// went wrong.
+    #[error("bad request ({:?}): {}", .0.status, .0.message)]
+    ApiError(ApiError),
+
+    /// Some other request error happened, could be status code, or network.
+    #[error(transparent)]
+    Other(#[from] reqwest::Error),
+}
+
 /// Struct representing errors that trovo api responds with.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ApiError {
@@ -151,7 +172,9 @@ pub struct ApiError {
 impl ApiError {
     /// Returns true if the given status code is know to return friendly errors
     pub fn can_handle_code(status: StatusCode) -> bool {
-        status == StatusCode::BAD_REQUEST || status == StatusCode::INTERNAL_SERVER_ERROR
+        status == StatusCode::BAD_REQUEST
+            || status == StatusCode::UNAUTHORIZED
+            || status == StatusCode::INTERNAL_SERVER_ERROR
     }
 }
 
@@ -163,3 +186,9 @@ impl Default for ApiError {
         }
     }
 }
+
+/// Error returned by [`AccessTokenOnly`](crate::AccessTokenOnly) when
+/// [`refresh_token`](crate::AccessTokenProvider::refresh_token) is called.
+#[derive(Error, Debug)]
+#[error("access token expired and doesn't support refreshing")]
+pub struct AccessTokenExpired;

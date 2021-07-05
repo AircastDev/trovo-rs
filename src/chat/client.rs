@@ -1,11 +1,15 @@
 use crate::{
     access_token,
     auth::{AccessTokenProvider, ClientIdProvider},
-    chat::{ChatConnectError, ChatMessageStream, ChatToken},
-    Client,
+    chat::{ChatConnectError, ChatMessageStream, ChatToken, SendChatMessagePayload},
+    ApiError, AuthenticatedRequestError, Client, RequestError,
 };
 use reqwest::header;
-use std::{error::Error, fmt::Display};
+use std::{
+    error::Error,
+    fmt::{Debug, Display},
+};
+use thiserror::Error;
 
 impl<A> Client<A>
 where
@@ -15,27 +19,34 @@ where
     pub async fn chat_token_for_channel(
         &self,
         channel_id: impl AsRef<str>,
-    ) -> Result<ChatToken, reqwest::Error> {
-        self.http
+    ) -> Result<ChatToken, RequestError> {
+        let res = self
+            .http
             .get(&format!(
                 "https://open-api.trovo.live/openplatform/chat/channel-token/{}",
                 channel_id.as_ref()
             ))
             .header("Client-ID", self.auth_provider.client_id())
             .send()
-            .await?
-            .error_for_status()?
-            .json()
-            .await
+            .await?;
+
+        if ApiError::can_handle_code(res.status()) {
+            let err: ApiError = res.json().await.unwrap_or_default();
+            Err(RequestError::ApiError(err))
+        } else {
+            let response = res.error_for_status()?.json().await?;
+            Ok(response)
+        }
     }
 
     /// Connect to the given channel id and receive a stream of messages.
     pub async fn chat_messages_for_channel(
         &self,
         channel_id: impl AsRef<str>,
-    ) -> Result<ChatMessageStream, ChatConnectError> {
+    ) -> Result<ChatMessageStream, ChatMessagesForChannelError> {
         let token = self.chat_token_for_channel(channel_id).await?;
-        ChatMessageStream::connect(token).await
+        let messages = ChatMessageStream::connect(token).await?;
+        Ok(messages)
     }
 }
 
@@ -44,8 +55,10 @@ where
     A: AccessTokenProvider,
 {
     /// Get a chat token for the authenticated user's channel
-    pub async fn chat_token_for_user(&self) -> Result<ChatToken, ChatTokenForUserError<A::Error>> {
-        let result = self
+    pub async fn chat_token_for_user(
+        &self,
+    ) -> Result<ChatToken, AuthenticatedRequestError<A::Error>> {
+        let res = self
             .http
             .get("https://open-api.trovo.live/openplatform/chat/token")
             .header("Client-ID", self.auth_provider.client_id())
@@ -53,15 +66,19 @@ where
                 header::AUTHORIZATION,
                 format!(
                     "OAuth {}",
-                    access_token!(self.auth_provider, ChatTokenForUserError)
+                    access_token!(self.auth_provider, AuthenticatedRequestError)
                 ),
             )
             .send()
-            .await?
-            .error_for_status()?
-            .json()
             .await?;
-        Ok(result)
+
+        if ApiError::can_handle_code(res.status()) {
+            let err: ApiError = res.json().await.unwrap_or_default();
+            Err(AuthenticatedRequestError::ApiError(err))
+        } else {
+            let response = res.error_for_status()?.json().await?;
+            Ok(response)
+        }
     }
 
     /// Connect to the authenticated user's channel and receive a stream of messages.
@@ -71,63 +88,73 @@ where
         let token = self
             .chat_token_for_user()
             .await
-            .map_err(ChatMessagesForUserError::ChatToken)?;
+            .map_err(ChatMessagesForUserError::Request)?;
         let messages = ChatMessageStream::connect(token).await?;
         Ok(messages)
     }
-}
 
-/// Error that can happen on calls to [`Client::chat_token_for_user`]
-#[derive(Debug)]
-pub enum ChatTokenForUserError<E> {
-    /// Error refreshing token
-    RefreshToken(E),
+    /// Send a chat message to a channel
+    ///
+    /// # Scopes
+    ///
+    /// ## Sending to your own channel
+    ///
+    /// Requires `chat_send_self`
+    ///
+    /// ## Sending to other channels
+    ///
+    /// To send a message as sender (user A) to channel (owned by user B), the application needs to
+    /// get scopes `chat_send_self` of user A, and `send_to_my_channel` of user B.
+    pub async fn send_chat_message(
+        &self,
+        channel_id: Option<String>,
+        message: impl Into<String>,
+    ) -> Result<(), AuthenticatedRequestError<A::Error>> {
+        let res = self
+            .http
+            .post("https://open-api.trovo.live/openplatform/chat/send")
+            .header("Client-ID", self.auth_provider.client_id())
+            .header(
+                header::AUTHORIZATION,
+                format!(
+                    "OAuth {}",
+                    access_token!(self.auth_provider, AuthenticatedRequestError)
+                ),
+            )
+            .json(&SendChatMessagePayload {
+                content: message.into(),
+                channel_id,
+            })
+            .send()
+            .await?;
 
-    /// Error during request to server
-    Http(reqwest::Error),
-}
-
-impl<E> From<reqwest::Error> for ChatTokenForUserError<E> {
-    fn from(error: reqwest::Error) -> Self {
-        Self::Http(error)
-    }
-}
-
-impl<E> Display for ChatTokenForUserError<E>
-where
-    E: Display,
-{
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            ChatTokenForUserError::RefreshToken(e) => e.fmt(f),
-            ChatTokenForUserError::Http(e) => e.fmt(f),
-        }
-    }
-}
-
-impl<E> Error for ChatTokenForUserError<E>
-where
-    E: 'static + Error + Display,
-{
-    fn source(&self) -> Option<&(dyn Error + 'static)> {
-        match self {
-            ChatTokenForUserError::RefreshToken(e) => Some(e),
-            ChatTokenForUserError::Http(e) => Some(e),
+        if ApiError::can_handle_code(res.status()) {
+            let err: ApiError = res.json().await.unwrap_or_default();
+            Err(AuthenticatedRequestError::ApiError(err))
+        } else {
+            res.error_for_status()?;
+            Ok(())
         }
     }
 }
 
 /// Error that can happen on calls to [`Client::chat_messages_for_user`]
 #[derive(Debug)]
-pub enum ChatMessagesForUserError<E> {
+pub enum ChatMessagesForUserError<E>
+where
+    E: Display + Debug,
+{
     /// Error fetching chat token
-    ChatToken(ChatTokenForUserError<E>),
+    Request(AuthenticatedRequestError<E>),
 
     /// Error during request to server
     ChatConnect(ChatConnectError),
 }
 
-impl<E> From<ChatConnectError> for ChatMessagesForUserError<E> {
+impl<E> From<ChatConnectError> for ChatMessagesForUserError<E>
+where
+    E: Display + Debug,
+{
     fn from(error: ChatConnectError) -> Self {
         Self::ChatConnect(error)
     }
@@ -135,12 +162,12 @@ impl<E> From<ChatConnectError> for ChatMessagesForUserError<E> {
 
 impl<E> Display for ChatMessagesForUserError<E>
 where
-    E: Display,
+    E: Display + Debug,
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            ChatMessagesForUserError::ChatToken(e) => e.fmt(f),
-            ChatMessagesForUserError::ChatConnect(e) => e.fmt(f),
+            ChatMessagesForUserError::Request(e) => Display::fmt(e, f),
+            ChatMessagesForUserError::ChatConnect(e) => Display::fmt(e, f),
         }
     }
 }
@@ -151,8 +178,20 @@ where
 {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         match self {
-            ChatMessagesForUserError::ChatToken(e) => Some(e),
+            ChatMessagesForUserError::Request(e) => Some(e),
             ChatMessagesForUserError::ChatConnect(e) => Some(e),
         }
     }
+}
+
+/// Error that can happen on calls to [`Client::chat_messages_for_user`]
+#[derive(Debug, Error)]
+pub enum ChatMessagesForChannelError {
+    /// Error fetching chat token
+    #[error(transparent)]
+    Request(#[from] RequestError),
+
+    /// Error during request to server
+    #[error(transparent)]
+    ChatConnect(#[from] ChatConnectError),
 }

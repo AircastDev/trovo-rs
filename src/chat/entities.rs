@@ -82,6 +82,7 @@ pub struct ChatMessageData {
     pub eid: String,
 
     /// A list of chats. One chat message may contain multiple chats.
+    #[serde(default)]
     pub chats: Vec<ChatMessage>,
 }
 
@@ -178,4 +179,15 @@ pub struct ChatMessage {
     /// The list of role of the message sender which is a json string. Different from "roles", "custom_role"
     /// contains more information. However, if you just need the role names, use "roles" instead.
     pub custom_role: Option<String>,
+}
+
+/// Payload for the send chat message request
+#[derive(Debug, Serialize, Deserialize)]
+pub struct SendChatMessagePayload {
+    /// The message contents
+    pub content: String,
+
+    /// The channel to send the message in, if None then it will send to the user's own channel
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub channel_id: Option<String>,
 }

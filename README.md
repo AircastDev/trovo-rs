@@ -7,8 +7,8 @@
 
 A Rust api client for [Trovo](https://trovo.live).
 
-Currently supporting connecting to chat and looking up users via username, more will be added as
-the crate develops.
+Currently supports connecting to chat, sending messages, and looking up users via username, more
+will be added as the crate develops.
 
 ### Example
 

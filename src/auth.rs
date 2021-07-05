@@ -1,3 +1,6 @@
+use crate::AccessTokenExpired;
+use std::fmt::{Debug, Display};
+
 /// A trait for an auth provider that can provide
 /// a client id
 pub trait ClientIdProvider {
@@ -43,7 +46,7 @@ impl From<String> for AccessToken {
 #[async_trait::async_trait]
 pub trait AccessTokenProvider: ClientIdProvider {
     /// Error type used for refreshing errors
-    type Error;
+    type Error: Display + Debug;
 
     /// Get the access token for this auth provider.
     ///
@@ -53,6 +56,43 @@ pub trait AccessTokenProvider: ClientIdProvider {
 
     /// Refresh the token.
     async fn refresh_token(&self) -> Result<String, Self::Error>;
+}
+
+/// A simple access token provider that errors if refreshing is attempted. It is strongly advised
+/// that you implement your own [`AccessTokenProvider`] so that you can handle refreshing.
+#[derive(Debug)]
+pub struct AccessTokenOnly {
+    client_id: String,
+    token: String,
+}
+
+impl AccessTokenOnly {
+    /// Creat a new [`AccessTokenOnly`] instance with the given client id and access token
+    pub fn new(client_id: impl Into<String>, access_token: impl Into<String>) -> Self {
+        Self {
+            client_id: client_id.into(),
+            token: access_token.into(),
+        }
+    }
+}
+
+impl ClientIdProvider for AccessTokenOnly {
+    fn client_id(&self) -> &str {
+        &self.client_id
+    }
+}
+
+#[async_trait::async_trait]
+impl AccessTokenProvider for AccessTokenOnly {
+    type Error = AccessTokenExpired;
+
+    fn access_token(&self) -> AccessToken {
+        AccessToken::Token(self.token.clone())
+    }
+
+    async fn refresh_token(&self) -> Result<String, Self::Error> {
+        Err(AccessTokenExpired)
+    }
 }
 
 /// Obtain an access token from an AccessTokenProvider

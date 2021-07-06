@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.2.2 (2021-07-05)
+
+### Added
+
+-   Add `emotes` function to client to fetch trovo emotes
+
 ## v0.2.1 (2021-07-05)
 
 ### Added

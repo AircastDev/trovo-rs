@@ -1,6 +1,7 @@
 use crate::{
-    ApiError, ChannelInfo, ClientIdProvider, ErrorStatus, GetChannelByIdPayload, GetUsersPayload,
-    GetUsersResponse, RequestError, User,
+    ApiError, ChannelInfo, ClientIdProvider, EmoteChannels, EmoteFetchType, ErrorStatus,
+    GetChannelByIdPayload, GetEmotesPayload, GetEmotesResponse, GetUsersPayload, GetUsersResponse,
+    RequestError, User,
 };
 use std::time::Duration;
 
@@ -116,5 +117,31 @@ where
         } else {
             Some(channel)
         })
+    }
+
+    /// Gets list of emotes for each channel and global/event emotes if requested.
+    pub async fn emotes(
+        &self,
+        emote_type: EmoteFetchType,
+        channel_ids: Vec<String>,
+    ) -> Result<EmoteChannels, RequestError> {
+        let res = self
+            .http
+            .post("https://open-api.trovo.live/openplatform/getemotes")
+            .header("Client-ID", self.auth_provider.client_id())
+            .json(&GetEmotesPayload {
+                emote_type,
+                channel_id: channel_ids,
+            })
+            .send()
+            .await?;
+
+        if ApiError::can_handle_code(res.status()) {
+            let err: ApiError = res.json().await.unwrap_or_default();
+            return Err(RequestError::ApiError(err));
+        }
+
+        let response: GetEmotesResponse = res.error_for_status()?.json().await?;
+        Ok(response.channels)
     }
 }

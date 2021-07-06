@@ -1,5 +1,7 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use serde_repr::*;
+use serde_with::rust::string_empty_as_none;
 
 /// User details returned by [`Client::users`](crate::Client::users)
 #[derive(Debug, Serialize, Deserialize)]
@@ -125,4 +127,102 @@ pub struct SocialLink {
 
     /// Url to the account on the given platform
     url: String,
+}
+
+/// Types of emotes to fetch
+#[derive(Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[repr(i16)]
+pub enum EmoteFetchType {
+    /// Get platform-level emoticons and custom emoticons corresponding to channel IDs
+    All = 0,
+
+    /// Get the custom emoji corresponding to the channel IDs
+    Custom = 1,
+
+    /// Get platform-level emoticons.
+    Platform = 2,
+}
+
+impl Default for EmoteFetchType {
+    fn default() -> Self {
+        Self::All
+    }
+}
+
+/// Payload for the get emotes api call
+#[derive(Debug, Serialize, Deserialize)]
+pub struct GetEmotesPayload {
+    /// Get the kind of emotes you want
+    pub emote_type: EmoteFetchType,
+
+    /// A list of valid channel IDs you want to request for
+    pub channel_id: Vec<String>,
+}
+
+/// Common emote payload across types
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Emote {
+    /// Name of emote.
+    pub name: String,
+
+    /// Description of emote.
+    pub description: String,
+
+    /// URL of emote.
+    pub url: String,
+
+    /// Emoticon available status.
+    pub status: String,
+
+    /// Name of platform-level limited emoticons activity.
+    pub activity_name: Option<String>,
+
+    /// Gifp URL of emote.
+    #[serde(with = "string_empty_as_none")]
+    pub gifp: Option<String>,
+
+    /// Webp URL of emote.
+    #[serde(with = "string_empty_as_none")]
+    pub webp: Option<String>,
+
+    /// Update time of emote in seconds.
+    pub update_time: Option<String>,
+}
+
+/// Response for the get emotes api
+#[derive(Debug, Deserialize)]
+pub struct GetEmotesResponse {
+    /// Map of different emote types
+    pub channels: EmoteChannels,
+}
+
+/// Map of different emote types
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct EmoteChannels {
+    /// Container for customized/channel emotes
+    pub customized_emotes: CustomizedEmotes,
+
+    /// List of event emotes
+    pub event_emotes: Vec<Emote>,
+
+    /// List of global emotes
+    pub global_emotes: Vec<Emote>,
+}
+
+/// Container for customized emotes
+#[derive(Debug, Deserialize)]
+pub struct CustomizedEmotes {
+    /// List of channels and their emotes
+    pub channel: Vec<ChannelEmotes>,
+}
+
+/// Channel id and its emotes
+#[derive(Debug, Deserialize)]
+pub struct ChannelEmotes {
+    /// Id of the channel
+    pub channel_id: String,
+
+    /// List of channel's emotes
+    pub emotes: Vec<Emote>,
 }

@@ -4,10 +4,9 @@
     rust_2018_idioms,
     unreachable_pub
 )]
-//! A Rust api client for [Trovo](https://trovo.live).
+//! A Rust api & chat client for [Trovo](https://trovo.live).
 //!
-//! Currently supports connecting to chat, sending messages, looking up users via username, and
-//! fetching channel information, more will be added as the crate develops.
+//! It currently doesn't support all of the trovo api, feel free to open a PR adding new endpoints.
 //!
 //! ## Example
 //!

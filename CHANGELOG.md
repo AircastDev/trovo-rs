@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.3.0 (2021-07-26)
+
+### Fixed
+
+-   Avatar can be null/missing on chat messages
+-   Handle gifp/webp fields being missing on some emotes
+
 ## v0.2.2 (2021-07-05)
 
 ### Added

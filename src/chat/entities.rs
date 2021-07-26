@@ -151,7 +151,7 @@ pub struct ChatMessage {
     pub nick_name: String,
 
     /// URL of the sender’s profile picture.
-    pub avatar: String,
+    pub avatar: Option<String>,
 
     /// The subscription level of the user in the channel. “sub_L1” for tier 1 subscriber.
     pub sub_lv: Option<String>,

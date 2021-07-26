@@ -178,11 +178,11 @@ pub struct Emote {
     pub activity_name: Option<String>,
 
     /// Gifp URL of emote.
-    #[serde(with = "string_empty_as_none")]
+    #[serde(default, with = "string_empty_as_none")]
     pub gifp: Option<String>,
 
     /// Webp URL of emote.
-    #[serde(with = "string_empty_as_none")]
+    #[serde(default, with = "string_empty_as_none")]
     pub webp: Option<String>,
 
     /// Update time of emote in seconds.

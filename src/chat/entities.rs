@@ -171,8 +171,8 @@ pub struct ChatMessage {
     /// ID of the message.
     pub message_id: String,
 
-    /// User ID of the sender.
-    pub sender_id: i64,
+    /// User ID of the sender. Maybe be `None` for `Event` message types, possibly others
+    pub sender_id: Option<i64>,
 
     /// Extra info of chat
     #[serde(default)]

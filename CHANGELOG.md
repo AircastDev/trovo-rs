@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.4.0 (2021-07-26)
+
+### Fixed
+
+-   `sender_id` may be None
+
 ## v0.3.0 (2021-07-26)
 
 ### Fixed

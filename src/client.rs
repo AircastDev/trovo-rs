@@ -1,8 +1,10 @@
 use crate::{
-    ApiError, ChannelInfo, ClientIdProvider, EmoteChannels, EmoteFetchType, ErrorStatus,
-    GetChannelByIdPayload, GetEmotesPayload, GetEmotesResponse, GetUsersPayload, GetUsersResponse,
-    RequestError, User,
+    access_token, AccessTokenProvider, ApiError, AuthenticatedRequestError, ChannelInfo,
+    ChannelUpdate, ChannelUpdatePayload, ClientIdProvider, EmoteChannels, EmoteFetchType,
+    ErrorStatus, GetChannelByIdPayload, GetEmotesPayload, GetEmotesResponse, GetUsersPayload,
+    GetUsersResponse, RequestError, User,
 };
+use reqwest::header;
 use std::time::Duration;
 
 /// Entrypoint for making requests to the Trovo api.
@@ -143,5 +145,44 @@ where
 
         let response: GetEmotesResponse = res.error_for_status()?.json().await?;
         Ok(response.channels)
+    }
+}
+
+impl<A> Client<A>
+where
+    A: AccessTokenProvider,
+{
+    /// Allows you to update the user’s channel settings, including title, category, language,
+    /// audience type. You may update only part of the info.
+    pub async fn update_channel(
+        &self,
+        channel_id: impl Into<String>,
+        update: ChannelUpdate,
+    ) -> Result<(), AuthenticatedRequestError<A::Error>> {
+        let res = self
+            .http
+            .post("https://open-api.trovo.live/openplatform/channels/update")
+            .header("Client-ID", self.auth_provider.client_id())
+            .header(
+                header::AUTHORIZATION,
+                format!(
+                    "OAuth {}",
+                    access_token!(self.auth_provider, AuthenticatedRequestError)
+                ),
+            )
+            .json(&ChannelUpdatePayload {
+                channel_id: channel_id.into(),
+                update,
+            })
+            .send()
+            .await?;
+
+        if ApiError::can_handle_code(res.status()) {
+            let err: ApiError = res.json().await.unwrap_or_default();
+            Err(AuthenticatedRequestError::ApiError(err))
+        } else {
+            res.error_for_status()?;
+            Ok(())
+        }
     }
 }

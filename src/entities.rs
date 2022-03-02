@@ -226,3 +226,30 @@ pub struct ChannelEmotes {
     /// List of channel's emotes
     pub emotes: Vec<Emote>,
 }
+
+/// Payload for the channel update endpoint
+#[derive(Debug, Serialize)]
+pub struct ChannelUpdatePayload {
+    /// Id of the channel
+    pub channel_id: String,
+
+    /// Fields to update
+    #[serde(flatten)]
+    pub update: ChannelUpdate,
+}
+
+/// Fields to update on a channel
+#[derive(Debug, Default, Serialize)]
+pub struct ChannelUpdate {
+    /// Name of user’s channel
+    pub live_title: Option<String>,
+
+    /// Represent which game is the user playing in their channel.
+    pub category_id: Option<String>,
+
+    /// 2 character language ISO 2 code, see standard: https://www.sitepoint.com/iso-2-letter-language-codes/
+    pub language_code: Option<String>,
+
+    /// 3 options representing age range
+    pub audi_type: Option<AudienceType>,
+}

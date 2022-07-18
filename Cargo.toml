@@ -28,7 +28,7 @@ async-trait = "0.1"
 thiserror = "1.0"
 serde_repr = "0.1"
 chrono = "0.4"
-serde_with = { version = "1.9", features = ["chrono"] }
+serde_with = { version = "2.0", features = ["chrono"] }
 
 # cfg(feature = "chat")
 async-tungstenite = { version = "0.14", optional = true, features = ["tokio-runtime", "tokio-rustls-webpki-roots"] }

@@ -174,6 +174,9 @@ pub struct ChatMessage {
     /// User ID of the sender. Maybe be `None` for `Event` message types, possibly others
     pub sender_id: Option<i64>,
 
+    /// Time that the message was sent
+    pub send_time: u32,
+
     /// Extra info of chat
     #[serde(default)]
     pub content_data: HashMap<String, serde_json::Value>,

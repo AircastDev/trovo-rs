@@ -1,5 +1,7 @@
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_repr::*;
+use serde_with::{serde_as, TimestampSeconds};
 use std::collections::HashMap;
 
 /// Holds a chat token obtained via the api to authenticate
@@ -137,6 +139,7 @@ pub enum ChatMessageType {
 }
 
 /// A single chat message
+#[serde_as]
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ChatMessage {
     /// Type of chat message.
@@ -173,6 +176,10 @@ pub struct ChatMessage {
 
     /// User ID of the sender. Maybe be `None` for `Event` message types, possibly others
     pub sender_id: Option<i64>,
+
+    /// Time that the message was sent
+    #[serde_as(as = "TimestampSeconds<i64>")]
+    pub send_time: DateTime<Utc>,
 
     /// Extra info of chat
     #[serde(default)]

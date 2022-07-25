@@ -1,6 +1,6 @@
 [package]
 name = "trovo"
-version = "0.4.0"
+version = "0.5.0"
 edition = "2021"
 description = "A trovo.live api & chat client written in and for rust"
 authors = ["James Birtles <jamesb@airca.st>"]

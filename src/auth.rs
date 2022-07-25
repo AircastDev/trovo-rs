@@ -101,8 +101,8 @@ impl AccessTokenProvider for AccessTokenOnly {
 macro_rules! access_token {
     ($auth: expr, $error_type: ident) => {
         match $auth.access_token() {
-            crate::auth::AccessToken::Token(token) => token,
-            crate::auth::AccessToken::NeedsRefresh => $auth
+            $crate::auth::AccessToken::Token(token) => token,
+            $crate::auth::AccessToken::NeedsRefresh => $auth
                 .refresh_token()
                 .await
                 .map_err($error_type::RefreshToken)?,

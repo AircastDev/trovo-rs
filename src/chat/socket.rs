@@ -202,9 +202,10 @@ where
                 let msg = serde_json::from_slice(bytes.as_slice())?;
                 Ok(self.handle_socket_message(msg).await)
             }
-            Message::Ping(_) => todo!(),
-            Message::Pong(_) => todo!(),
+            Message::Ping(_) => Ok(Continuation::Continue),
+            Message::Pong(_) => Ok(Continuation::Continue),
             Message::Close(reason) => Err(ChatMessageStreamError::SocketClosed(reason)),
+            Message::Frame(_) => Ok(Continuation::Continue),
         }
     }
 

@@ -89,7 +89,7 @@ pub struct ChatMessageData {
 }
 
 /// Type of the chat message
-#[derive(Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[derive(Serialize_repr, Deserialize_repr, PartialEq, Eq, Debug)]
 #[repr(u16)]
 pub enum ChatMessageType {
     /// Normal chat messages.

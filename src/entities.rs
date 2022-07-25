@@ -1,7 +1,7 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_repr::*;
-use serde_with::rust::string_empty_as_none;
+use serde_with::{serde_as, NoneAsEmptyString};
 
 /// User details returned by [`Client::users`](crate::Client::users)
 #[derive(Debug, Serialize, Deserialize)]
@@ -81,7 +81,7 @@ pub struct ChannelInfo {
     pub channel_url: String,
 
     /// Timestamp of the streamer creation time
-    #[serde(with = "serde_with::chrono::datetime_utc_ts_seconds_from_any")]
+    #[serde(with = "serde_with::chrono_0_4::datetime_utc_ts_seconds_from_any")]
     pub created_at: DateTime<Utc>,
 
     /// Count of subscribers
@@ -94,11 +94,11 @@ pub struct ChannelInfo {
     pub social_links: Vec<SocialLink>,
 
     /// The latest streaming start time of a given channel.
-    #[serde(with = "serde_with::chrono::datetime_utc_ts_seconds_from_any")]
+    #[serde(with = "serde_with::chrono_0_4::datetime_utc_ts_seconds_from_any")]
     pub started_at: DateTime<Utc>,
 
     /// The latest streaming end time of a given channel.
-    #[serde(with = "serde_with::chrono::datetime_utc_ts_seconds_from_any")]
+    #[serde(with = "serde_with::chrono_0_4::datetime_utc_ts_seconds_from_any")]
     pub ended_at: DateTime<Utc>,
 }
 
@@ -130,7 +130,7 @@ pub struct SocialLink {
 }
 
 /// Types of emotes to fetch
-#[derive(Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[derive(Serialize_repr, Deserialize_repr, PartialEq, Eq, Debug)]
 #[repr(i16)]
 pub enum EmoteFetchType {
     /// Get platform-level emoticons and custom emoticons corresponding to channel IDs
@@ -160,6 +160,7 @@ pub struct GetEmotesPayload {
 }
 
 /// Common emote payload across types
+#[serde_as]
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Emote {
     /// Name of emote.
@@ -178,11 +179,13 @@ pub struct Emote {
     pub activity_name: Option<String>,
 
     /// Gifp URL of emote.
-    #[serde(default, with = "string_empty_as_none")]
+    #[serde(default)]
+    #[serde_as(as = "NoneAsEmptyString")]
     pub gifp: Option<String>,
 
     /// Webp URL of emote.
-    #[serde(default, with = "string_empty_as_none")]
+    #[serde(default)]
+    #[serde_as(as = "NoneAsEmptyString")]
     pub webp: Option<String>,
 
     /// Update time of emote in seconds.

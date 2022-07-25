@@ -5,7 +5,7 @@ use std::fmt::{Debug, Display};
 use thiserror::Error;
 
 /// Error codes returned by the Trovo api
-#[derive(Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[derive(Serialize_repr, Deserialize_repr, PartialEq, Eq, Debug)]
 #[repr(i16)]
 pub enum ErrorStatus {
     /// Internal service failed to fetch data. Please try again.

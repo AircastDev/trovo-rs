@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+-   Add `update_channel` function to client
+-   Add `send_time` field to chat messages
+
+### Updated
+
+-   Now using edition 2021
+-   Updated various internal dependencies
+
 ## v0.4.0 (2021-07-26)
 
 ### Fixed

@@ -31,7 +31,7 @@ chrono = "0.4"
 serde_with = { version = "2", features = ["chrono"] }
 
 # cfg(feature = "chat")
-async-tungstenite = { version = "0.17", optional = true, features = ["tokio-runtime", "tokio-rustls-webpki-roots"] }
+async-tungstenite = { version = "0.20", optional = true, features = ["tokio-runtime", "tokio-rustls-webpki-roots"] }
 tokio-util = { version = "0.7", optional = true }
 
 [dev-dependencies]
